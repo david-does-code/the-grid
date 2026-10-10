@@ -47,6 +47,11 @@ function writeTestWav(file, { seconds = 3, sampleRate = 44100, gain = 0.35 } = {
 }
 
 function playWav(file) {
+  if (process.platform === 'linux') {
+    return new Promise((resolve, reject) => {
+      require('node:child_process').execFile('paplay', [file], { timeout: 20000 }, (err) => (err ? reject(err) : resolve()));
+    });
+  }
   return runScript('play-wav.ps1', ['-Path', file], { timeout: 20000 });
 }
 

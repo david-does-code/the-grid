@@ -5,7 +5,7 @@ const path = require('node:path');
 const { app, BrowserWindow, ipcMain, session, shell, clipboard, screen, Menu, nativeImage } = require('electron');
 
 const store = require('./store');
-const { installLoopbackCapture } = require('./audio-capture');
+const { installLoopbackCapture, useOutputMonitorAsInput } = require('./audio-capture');
 const { SpotifyAuth } = require('./spotify-auth');
 const { SpotifyApi } = require('./spotify-api');
 const { PlaybackController } = require('./playback');
@@ -17,6 +17,8 @@ const { DefaultDeviceWatcher } = require('./audio-devices');
 const { startUpdater, readToken } = require('./updater');
 const { VoteQueue, normalizeVote } = require('./votes');
 const i18n = require('../shared/i18n');
+
+useOutputMonitorAsInput();
 
 /**
  * Programmet hed før "Visamp" og gemte data i %APPDATA%/Visamp. Nu hedder det "The Grid".

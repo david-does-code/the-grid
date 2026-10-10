@@ -53,3 +53,23 @@ test('medietaster sendes med den rigtige tastkode', { skip: process.platform !==
   assert.deepEqual(calls, [['mediakey.ps1', ['-Vk', 0xb3]]]);
   await assert.rejects(sendMediaKey('eject', { run: async () => {} }), /Unknown media key/);
 });
+
+test('Linux: medietaster går til Spotify over MPRIS', async () => {
+  const calls = [];
+  await sendMediaKey('next', { platform: 'linux', mpris: async (method) => calls.push(method) });
+  await sendMediaKey('playpause', { platform: 'linux', mpris: async (method) => calls.push(method) });
+  assert.deepEqual(calls, ['Next', 'PlayPause']);
+});
+
+test('Linux: lydfangsten læser monitoren af standard-afspilningsenheden, medmindre brugeren har valgt selv', () => {
+  const { useOutputMonitorAsInput } = require('../src/main/audio-capture.js');
+  const env = {};
+  useOutputMonitorAsInput(env, 'linux');
+  assert.equal(env.PULSE_SOURCE, '@DEFAULT_MONITOR@');
+  const own = { PULSE_SOURCE: 'my.monitor' };
+  useOutputMonitorAsInput(own, 'linux');
+  assert.equal(own.PULSE_SOURCE, 'my.monitor');
+  const win = {};
+  useOutputMonitorAsInput(win, 'win32');
+  assert.equal(win.PULSE_SOURCE, undefined);
+});

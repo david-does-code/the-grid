@@ -2,12 +2,15 @@
 
 const { spawn } = require('node:child_process');
 const { EventEmitter } = require('node:events');
-const { spawnScript } = require('./powershell');
+const path = require('node:path');
+const { spawnScript, scriptPath } = require('./powershell');
 
 const MAX_RESTARTS = 5;
 
 // PowerShell-løkken ligger i src/main/ps/audio-watch.ps1: den læser Windows' standard-afspilningsenhed
 // hvert sekund via Core Audio (ps/audio-devices.cs) og skriver "id|navn", når den ændrer sig.
+// På Linux gør src/main/sh/audio-watch.sh det samme med pactl subscribe.
+const LINUX_SCRIPT = scriptPath('audio-watch.sh', path.join(__dirname, 'sh'));
 
 /**
  * Hændelser:
@@ -28,11 +31,14 @@ class DefaultDeviceWatcher extends EventEmitter {
   }
 
   start() {
-    if (process.platform !== 'win32' || this.proc) return;
+    if (!['win32', 'linux'].includes(process.platform) || this.proc) return;
     this.stopped = false;
     let proc;
     try {
-      proc = spawnScript('audio-watch.ps1', [], { spawnImpl: this.spawnImpl });
+      proc =
+        process.platform === 'linux'
+          ? this.spawnImpl('bash', [LINUX_SCRIPT], { stdio: ['ignore', 'pipe', 'pipe'], detached: true })
+          : spawnScript('audio-watch.ps1', [], { spawnImpl: this.spawnImpl });
     } catch (err) {
       this.log.error('Could not start the audio device watcher:', err);
       return;
@@ -77,7 +83,14 @@ class DefaultDeviceWatcher extends EventEmitter {
 
   stop() {
     this.stopped = true;
-    if (this.proc) this.proc.kill();
+    if (this.proc && process.platform === 'linux') {
+      // Hele procesgruppen, så pactl subscribe ikke bliver hængende efter bash.
+      try {
+        process.kill(-this.proc.pid);
+      } catch {
+        // Allerede stoppet.
+      }
+    } else if (this.proc) this.proc.kill();
     this.proc = null;
   }
 }

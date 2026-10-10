@@ -13,6 +13,7 @@
     "diagnose": "node scripts/start.js --diagnose",
     "musictest": "node scripts/start.js --musictest",
     "dist": "node scripts/prepare-build.js && electron-builder --win nsis --x64",
+    "dist:linux": "node scripts/prepare-build.js && electron-builder --linux AppImage --x64",
     "dist:dir": "node scripts/prepare-build.js && electron-builder --win dir --x64",
     "release": "node scripts/release.js",
     "selftest:quiet": "node scripts/start.js --selftest --quiet",
@@ -82,7 +83,8 @@
       "node_modules/semver/**/*"
     ],
     "asarUnpack": [
-      "src/main/ps/**"
+      "src/main/ps/**",
+      "src/main/sh/**"
     ],
     "electronLanguages": [
       "en-US"

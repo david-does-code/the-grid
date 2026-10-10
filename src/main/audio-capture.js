@@ -42,4 +42,13 @@ function installLoopbackCapture(ses, { log = console } = {}) {
   });
 }
 
-module.exports = { installLoopbackCapture, ALLOWED_PERMISSIONS };
+/**
+ * Linux: Chromium's loopback findes ikke, og getDisplayMedia hænger på Wayland. I stedet læser rendereren
+ * "mikrofonen" med getUserMedia, og standard-input peges på monitoren af standard-afspilningsenheden.
+ * Skal kaldes, før Chromiums lydtjeneste starter.
+ */
+function useOutputMonitorAsInput(env = process.env, platform = process.platform) {
+  if (platform === 'linux' && !env.PULSE_SOURCE) env.PULSE_SOURCE = '@DEFAULT_MONITOR@';
+}
+
+module.exports = { installLoopbackCapture, useOutputMonitorAsInput, ALLOWED_PERMISSIONS };

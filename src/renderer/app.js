@@ -663,10 +663,12 @@
   async function startCapture({ fromUser = false } = {}) {
     if (state.capture.ok) return true;
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-      });
+      const audio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+      // Linux: standard-input er monitoren af standard-afspilningsenheden (useOutputMonitorAsInput i main).
+      const stream =
+        state.info && state.info.platform === 'linux'
+          ? await navigator.mediaDevices.getUserMedia({ audio })
+          : await navigator.mediaDevices.getDisplayMedia({ video: true, audio });
       // Kun lyden bruges; videosporet (vores eget vindue) stoppes med det samme.
       stream.getVideoTracks().forEach((track) => track.stop());
       const track = stream.getAudioTracks()[0];
